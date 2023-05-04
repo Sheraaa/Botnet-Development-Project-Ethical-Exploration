@@ -1,13 +1,4 @@
-#include <arpa/inet.h>
-#include <errno.h>
-#include <netinet/in.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
-
+// LE LOUP (client) + noms domaines ou adresses IP
 #include "header.h"
 #include "utils_v2.h"
 
@@ -21,30 +12,40 @@
 int initSocketClient(char *serverIP, int serverPort);
 
 /**
+ * the child processus who execute the command given in argument.
  *
  */
 void executeCommands();
 
-// LE LOUP (client)
 int main(int argc, char **argv) {
 
   if (argc != 2) {
     perror("Must give a name or IP adress in argument\n");
   }
 
-  int tabSockets[argc - 1];
-  char tab_ip_address[argc - 1][18];
-  int i = 1;
+  // int tabSockets[argc - 1];
+  // char tab_ip_address[argc - 1][18];
+  // int i = 1;
   int randomInt;
+  //
+  // while (i < argc) {
+  //   i++;
+  randomInt = randomIntBetween(0, 9);
+  //   tabSockets[i] = initSocketClient(tab_ip_address[i],
+  //   TAB_PORTS[randomInt]);
+  // }
+  printf("Le controller se connecte avec le zombie\n");
+  char tab_ip_address[18];
+  hostname_to_ip(argv[1], tab_ip_address);
+  int sockfd = initSocketClient(tab_ip_address, SERVER_PORT);
 
-  while (i < argc) {
-    hostname_to_ip(argv[1], tab_ip_address[i]);
-    i++;
-    randomInt = randomIntBetween(0, 9);
-    tabSockets[i] = initSocketClient(tab_ip_address[i], TAB_PORTS[randomInt]);
+  char buffer[SIZE_MESSAGE];
+  int nbRd;
+  while ((nbRd = sread(1, buffer, SIZE_MESSAGE)) != 0) {
+    buffer[nbRd - 1] = '\0';
+
+    swrite(sockfd, buffer, strlen(buffer)); // rajouter +1 ??
   }
-
-  fork_and_run1();
 }
 
 int initSocketClient(char *serverIP, int serverPort) {
@@ -52,3 +53,16 @@ int initSocketClient(char *serverIP, int serverPort) {
   sconnect(serverIP, serverPort, sockfd);
   return sockfd;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
