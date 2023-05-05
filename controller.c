@@ -12,10 +12,21 @@
 int initSocketClient(char *serverIP, int serverPort);
 
 /**
- * the child processus who execute the command given in argument.
+ * the child processus who send the command on the given socket.
+ *
+ * PRE: command : a valid command, socketfd: a valid socketfd
+ * POST:
  *
  */
-void executeCommands();
+void childSendCommand(void *command, void *socketfd);
+
+/**
+ * the child processus who listen on the given socket and display it on screen.
+ *
+ * PRE: socketfd: a valid socketfd.
+ * POST: display the response of the socket.
+ */
+void childReceiveCommand(void *socketfd);
 
 int main(int argc, char **argv) {
 
@@ -44,13 +55,14 @@ int main(int argc, char **argv) {
   char buffer[SIZE_MESSAGE];
   char response[SIZE_MESSAGE];
   int nbRd;
-
- // printf("Entrez votre commande: ");
+  char *msg = "\nCommande suivante: \n  - ";
+  // printf("Entrez votre commande: ");
   while ((nbRd = sread(0, buffer, SIZE_MESSAGE)) != 0) {
     buffer[nbRd - 1] = '\0';
     swrite(sockfd, buffer, nbRd); // rajouter +1 ??
-    nbRd = sread(sockfd, response, strlen(response));
-    swrite(1, response, SIZE_MESSAGE);
+    nbRd = sread(sockfd, response, sizeof(response));
+    swrite(1, response, nbRd);
+    swrite(1, msg, strlen(msg));
   }
 }
 

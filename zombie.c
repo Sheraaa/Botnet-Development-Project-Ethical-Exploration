@@ -1,8 +1,8 @@
 // LA MARIONNETTE (server) + port
 #include "header.h"
 #include "utils_v2.h"
-// //#define TAB_PORTS [10] = {1025, 1026, 1027, 1028, 1029, 1030, 1031, 1032,
-// 1033, 1034}
+// #define TAB_PORTS [10] = {1025, 1026, 1027, 1028, 1029, 1030, 1031, 1032,
+//  1033, 1034}
 
 /**
  * PRE:  port: a valid port number
@@ -37,26 +37,38 @@ int main(int argc, char **argv) {
   sockfd = initSocketServer(port);
   printf("Le serveur tourne sur le port : %d \n", port);
   pid_t childPID;
-
+  int status;
   while (1) {
+    printf("tst\n");
     // newsockfd = accept(sockfd, NULL, NULL);
     newsockfd = saccept(sockfd); // quand labo mettre accept!!
     printf("Le controller est connecté sur le zombie...\n");
 
     if (newsockfd > 0) {
-      ret = sread(newsockfd, msg, SIZE_MESSAGE);
-      if (ret > 0) {
-        childPID = fork_and_run2(childExec, &newsockfd, msg);
-        swaitpid(childPID, NULL, 0);
+      printf("tst 2\n");
+      ;
+      while ((ret = sread(newsockfd, msg, sizeof(msg))) != 0) {
+        if (ret > 0) {
+          printf("tst 3\n");
+          childPID = fork_and_run2(childExec, &newsockfd, msg);
+          // swaitpid(childPID, &status, 0);
+          swaitpid(childPID, NULL, 0);
+          if (WIFEXITED(status)) {
+            printf("Processus enfant terminé avec le code de sortie %d\n",
+                   WEXITSTATUS(status));
+          } else if (WIFSIGNALED(status)) {
+            printf("Processus enfant terminé à cause du signal %d\n",
+                   WTERMSIG(status));
+          }
+        }
       }
-      // ret = swrite(newsockfd, &msg, sizeof(msg));
     }
   }
   sclose(newsockfd);
   sclose(sockfd);
 }
 
-// établir une connexion du sock passif
+// establish a passive sock connection
 int initSocketServer(int port) {
   int sockfd = ssocket();
   int option = 1;
@@ -66,6 +78,7 @@ int initSocketServer(int port) {
   return sockfd;
 }
 
+// child process run the command
 void childExec(void *sockfd, void *command) {
   char *script = command;
   int newsockfd = *(int *)sockfd;
@@ -77,7 +90,7 @@ void childExec(void *sockfd, void *command) {
 
   // char *args[] = {"/bin/bash", "-c", command, NULL};
   // sexecl(sockfd, command);
-  execl("/bin/bash", "-c", script, NULL);
+  system(script);
   perror("Something went wrong with execl\n");
   exit(EXIT_FAILURE);
 }
