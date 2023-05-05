@@ -1,7 +1,8 @@
 // LA MARIONNETTE (server) + port
 #include "header.h"
 #include "utils_v2.h"
-// //#define TAB_PORTS [10] = {1025, 1026, 1027, 1028, 1029, 1030, 1031, 1032, 1033, 1034}
+// //#define TAB_PORTS [10] = {1025, 1026, 1027, 1028, 1029, 1030, 1031, 1032,
+// 1033, 1034}
 
 /**
  * PRE:  port: a valid port number
@@ -22,31 +23,32 @@ void childExec(void *sockfd, void *command);
 int main(int argc, char **argv) {
 
   int sockfd, newsockfd, i;
-  char *msg;
+  char msg[SIZE_MESSAGE];
   int ret;
   // struct pollfd fds[MAX_PLAYERS];
-
-  char *port;
+  int port;
   if (argc > 1) {
-    strcpy(port, argv[2]);
+    port = atoi(argv[1]);
   } else {
-    int randomInt = randomIntBetween(0, 9);
- //   strcpy(port, TAB_PORTS[randomInt]);
+    // int randomInt = randomIntBetween(0, 9);
+    // strcpy(port, TAB_PORTS[randomInt]);
   }
 
-  sockfd = initSocketServer(SERVER_PORT);
-  printf("Le serveur tourne sur le port : %s \n", port);
+  sockfd = initSocketServer(port);
+  printf("Le serveur tourne sur le port : %d \n", port);
   pid_t childPID;
 
   while (1) {
     // newsockfd = accept(sockfd, NULL, NULL);
     newsockfd = saccept(sockfd); // quand labo mettre accept!!
-    swrite(1, "Le controller est connecté sur le zombie...\n", 60);
+    printf("Le controller est connecté sur le zombie...\n");
 
     if (newsockfd > 0) {
-      ret = sread(newsockfd, msg, strlen(msg) + 1); // +1 ????
-      childPID = fork_and_run2(childExec, &newsockfd, msg);
-      swaitpid(childPID, NULL, 0);
+      ret = sread(newsockfd, msg, SIZE_MESSAGE);
+      if (ret > 0) {
+        childPID = fork_and_run2(childExec, &newsockfd, msg);
+        swaitpid(childPID, NULL, 0);
+      }
       // ret = swrite(newsockfd, &msg, sizeof(msg));
     }
   }
@@ -73,8 +75,9 @@ void childExec(void *sockfd, void *command) {
   dup2(newsockfd, STDOUT_FILENO);
   dup2(newsockfd, STDERR_FILENO);
 
-  char *args[] = {"/bin/bash", "-c", command, NULL};
-  sexecl(sockfd, command);
+  // char *args[] = {"/bin/bash", "-c", command, NULL};
+  // sexecl(sockfd, command);
+  execl("/bin/bash", "-c", script, NULL);
   perror("Something went wrong with execl\n");
   exit(EXIT_FAILURE);
 }
