@@ -30,26 +30,27 @@ void childReceiveCommand(void *socketfd);
 
 int main(int argc, char **argv) {
 
-  if (argc != 2) {
-    perror("Must give a name or IP adress in argument \n");
+  if (argc <= 2) {
+    perror("Must give 1: valid port & 2: a name or IP adress !\n");
     exit(EXIT_FAILURE);
   }
 
   // int tabSockets[argc - 1];
   // char tab_ip_address[argc - 1][18];
   // int i = 1;
-  int randomInt;
+  // int randomInt;
   //
   // while (i < argc) {
   //   i++;
-  randomInt = randomIntBetween(0, 9);
+  // randomInt = randomIntBetween(0, 9);
   //   tabSockets[i] = initSocketClient(tab_ip_address[i],
   //   TAB_PORTS[randomInt]);
   // }
   printf("Le controller se connecte avec le zombie...\n");
   char tab_ip_address[18];
-  hostname_to_ip(argv[1], tab_ip_address);
-  int sockfd = initSocketClient(tab_ip_address, 1026);
+  int port = atoi(argv[1]);
+  hostname_to_ip(argv[2], tab_ip_address);
+  int sockfd = initSocketClient(tab_ip_address, port);
   printf("Le controller est connecté \n");
 
   char buffer[SIZE_MESSAGE];
@@ -59,10 +60,12 @@ int main(int argc, char **argv) {
   // printf("Entrez votre commande: ");
   while ((nbRd = sread(0, buffer, SIZE_MESSAGE)) != 0) {
     buffer[nbRd - 1] = '\0';
-    swrite(sockfd, buffer, nbRd); // rajouter +1 ??
+    swrite(sockfd, buffer, nbRd);
     nbRd = sread(sockfd, response, sizeof(response));
     swrite(1, response, nbRd);
     swrite(1, msg, strlen(msg));
+    fork_and_run3(childSendCommand, &sockfd, buffer, &nbRd);
+    fork_and_run3(childSendCommand, &sockfd, buffer, &nbRd);
   }
 }
 

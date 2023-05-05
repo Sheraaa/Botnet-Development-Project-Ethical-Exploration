@@ -45,26 +45,22 @@ int main(int argc, char **argv) {
     printf("Le controller est connecté sur le zombie...\n");
 
     if (newsockfd > 0) {
-      printf("tst 2\n");
-      ;
       while ((ret = sread(newsockfd, msg, sizeof(msg))) != 0) {
-        if (ret > 0) {
-          printf("tst 3\n");
-          childPID = fork_and_run2(childExec, &newsockfd, msg);
-          // swaitpid(childPID, &status, 0);
-          swaitpid(childPID, NULL, 0);
-          if (WIFEXITED(status)) {
-            printf("Processus enfant terminé avec le code de sortie %d\n",
-                   WEXITSTATUS(status));
-          } else if (WIFSIGNALED(status)) {
-            printf("Processus enfant terminé à cause du signal %d\n",
-                   WTERMSIG(status));
-          }
+        childPID = fork_and_run2(childExec, &newsockfd, msg);
+        // swaitpid(childPID, &status, 0);
+        swaitpid(childPID, NULL, 0);
+        if (WIFEXITED(status)) {
+          printf("Processus enfant terminé avec le code de sortie %d\n",
+                 WEXITSTATUS(status));
+        } else if (WIFSIGNALED(status)) {
+          printf("Processus enfant terminé à cause du signal %d\n",
+                 WTERMSIG(status));
         }
       }
+      sclose(newsockfd);
+      printf("Connexion finie\n");
     }
   }
-  sclose(newsockfd);
   sclose(sockfd);
 }
 
