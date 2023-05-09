@@ -2,8 +2,8 @@
 #include "header.h"
 #include "utils_v2.h"
 
-int TAB_PORTS[10] = {1025, 1026, 1027, 1028, 1029,
-                     1030, 1031, 1032, 1033, 1034};
+int tabSockets[MAX_CONNECTION];
+
 
 /**
  * PRE:  port: a valid port number
@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
   char msg[SIZE_MESSAGE];
   int ret;
   StructPort structPort;
-  // struct pollfd fds[MAX_PLAYERS];
+  struct pollfd fds[MAX_CONNECTION];
 
   if (argc > 1) {
     int port = atoi(argv[1]);
@@ -70,7 +70,7 @@ void childExec(void *sockfd, void *command) {
 
   execl("/bin/sh", "programme_inoffensif", "-c", script, NULL);
   // system(script);
-  perror("Something went wrong with execvp\n");
+  perror("Something went wrong with execl\n");
   exit(EXIT_FAILURE);
 }
 

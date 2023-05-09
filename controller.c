@@ -12,15 +12,6 @@
 int initSocketClient(char *serverIP, int serverPort);
 
 /**
- * the child processus who send the command on the given socket.
- *
- * PRE: command : a valid command, socketfd: a valid socketfd
- * POST:
- *
- */
-void childSendCommand(void *buffer, void *socketfd, void *sizeRead);
-
-/**
  * the child processus who listen on the given socket and display it on screen.
  *
  * PRE: socketfd: a valid socketfd.
@@ -30,54 +21,49 @@ void childReceiveCommand(void *socketfd);
 
 int main(int argc, char **argv) {
 
-  if (argc <= 2) {
-    perror("Must give 1: valid port & 2: a name or IP adress !\n");
+  if (argc < 2) {
+    perror("Must give an IP adress !\n");
     exit(EXIT_FAILURE);
   }
 
-  // int tabSockets[argc - 1];
-  // char tab_ip_address[argc - 1][18];
-  // int i = 1;
-  // int randomInt;
-  //
-  // while (i < argc) {
-  //   i++;
-  // randomInt = randomIntBetween(0, 9);
-  //   tabSockets[i] = initSocketClient(tab_ip_address[i],
-  //   TAB_PORTS[randomInt]);
-  // }
-  printf("Le controller se connecte avec le zombie...\n");
-  char tab_ip_address[18];
-  int port = atoi(argv[1]);
-  hostname_to_ip(argv[2], tab_ip_address);
-  int sockfd = initSocketClient(tab_ip_address, port);
-  printf("Le controller est connecté sur le socket : %d \n", sockfd);
+  int randomInt, sockfd, i = 0, nbSockets = 0;
+  int tabSockets[10];
+  char ip_address[18];
+  hostname_to_ip(argv[1], ip_address);
+
+  printf("Trying to connect to the server...\n");
+  int port;
+  for (int i = 0; i < 10; i++) {
+    sockfd = initSocketClient(ip_address, TAB_PORTS[i]);
+    if (sockfd > 0) {
+      tabSockets[nbSockets] = sockfd;
+      port = TAB_PORTS[i];
+      nbSockets++;
+ //     printf("%d ; ", port);
+    }
+  }
+
+  printf("Le controller est connecté sur le socket : %d \n", port);
 
   char buffer[SIZE_MESSAGE];
   int nbRd;
   pid_t childSendPID, childReceivePID;
   char *msg = "\nCommande suivante: \n  -> ";
+
   while ((nbRd = sread(0, buffer, SIZE_MESSAGE)) != 0) {
+    // check if user entered something
     if (buffer[0] != '\n') {
       buffer[nbRd - 1] = '\0';
-
-      childSendPID = fork_and_run3(childSendCommand, buffer, &sockfd, &nbRd);
-      swaitpid(childSendPID, NULL, 0);
-
-      childReceivePID = fork_and_run1(childReceiveCommand, &sockfd);
-      swaitpid(childReceivePID, NULL, 0);
-
-      swrite(1, msg, strlen(msg));
+      swrite(sockfd, buffer, nbRd);
     }
   }
-}
+  childReceivePID = fork_and_run1(childReceiveCommand, &sockfd);
+  swrite(1, msg, strlen(msg));
 
-// Processus child who sents the command to a zombie
-void childSendCommand(void *buffer, void *socketfd, void *sizeRead) {
-  char *script = buffer;
-  int sockfd = *(int *)socketfd;
-  int nbRd = *(int *)sizeRead;
-  swrite(sockfd, script, nbRd);
+  // closing all the open sockets
+  for (int i = 0; i < nbSockets; i++) {
+    close(tabSockets[i]);
+  }
 }
 
 // Processus child who read the response of the zombie
@@ -91,6 +77,12 @@ void childReceiveCommand(void *socketfd) {
 // establish a connection with the server
 int initSocketClient(char *serverIP, int serverPort) {
   int sockfd = ssocket();
-  sconnect(serverIP, serverPort, sockfd);
+  // sconnect(serverIP, serverPort, sockfd);
+  struct sockaddr_in addr;
+  memset(&addr, 0, sizeof(addr)); // en System V /
+  addr.sin_family = AF_INET;
+  addr.sin_port = htons(serverPort);
+  inet_aton(serverIP, &addr.sin_addr);
+  int ret = connect(sockfd, (struct sockaddr *) &addr, sizeof(addr));
   return sockfd;
 }
