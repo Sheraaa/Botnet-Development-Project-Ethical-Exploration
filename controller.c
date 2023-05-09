@@ -1,4 +1,4 @@
-// LE LOUP (client) + noms domaines ou adresses IP
+// LE LOUP (client) + adresses IP
 #include "header.h"
 #include "utils_v2.h"
 
@@ -6,18 +6,27 @@
  * PRE: servierIP : a valid IP address
  *      serverPort: a valid port number
  * POST: on success, connects a client socket to serverIP:serverPort ;
- *       on failure, displays error cause and quits the program
- * RES: return socket file descriptor
+ *       -1 on failure.
+ * RES: return socket file descriptor or -1
  */
 int initSocketClient(char *serverIP, int serverPort);
 
 /**
- * the child processus who listen on the given socket and display it on screen.
+ * the child processus which listens on the given socket and display it on
+ * screen.
  *
  * PRE: socketfd: a valid socketfd.
  * POST: display the response of the socket.
  */
-void childReceiveCommand(void *socketfd);
+void childReceiveCommand(void *socketfd, void *nbSockets);
+
+/**
+ * Closes all the sockets in tabSockets
+ *
+ * PRE: tabSockets: contains all the open sockets, nbSockets:
+ * POST:
+ **/
+void disconnect(int *tabSockets, int nbSockets);
 
 int main(int argc, char **argv) {
 
@@ -25,64 +34,94 @@ int main(int argc, char **argv) {
     perror("Must give an IP adress !\n");
     exit(EXIT_FAILURE);
   }
-
   int randomInt, sockfd, i = 0, nbSockets = 0;
-  int tabSockets[10];
-  char ip_address[18];
-  hostname_to_ip(argv[1], ip_address);
+  int tabSockets[NB_SOCKETS];
+  char *ip_address = argv[1];
 
   printf("Trying to connect to the server...\n");
-  int port;
+  int port, ret;
   for (int i = 0; i < 10; i++) {
     sockfd = initSocketClient(ip_address, TAB_PORTS[i]);
-    if (sockfd > 0) {
+    if (sockfd != -1) {
       tabSockets[nbSockets] = sockfd;
       port = TAB_PORTS[i];
       nbSockets++;
- //     printf("%d ; ", port);
+      printf("The controller is connected to the socket : %d \n", port);
     }
   }
 
-  printf("Le controller est connecté sur le socket : %d \n", port);
+  fork_and_run2(childReceiveCommand, tabSockets, &nbSockets);
 
   char buffer[SIZE_MESSAGE];
   int nbRd;
-  pid_t childSendPID, childReceivePID;
-  char *msg = "\nCommande suivante: \n  -> ";
-
-  while ((nbRd = sread(0, buffer, SIZE_MESSAGE)) != 0) {
-    // check if user entered something
-    if (buffer[0] != '\n') {
-      buffer[nbRd - 1] = '\0';
-      swrite(sockfd, buffer, nbRd);
-    }
-  }
-  childReceivePID = fork_and_run1(childReceiveCommand, &sockfd);
+  char *msg = "\nCommande suivante -> ";
   swrite(1, msg, strlen(msg));
 
-  // closing all the open sockets
-  for (int i = 0; i < nbSockets; i++) {
-    close(tabSockets[i]);
+  while ((nbRd = sread(0, buffer, SIZE_MESSAGE)) != 0) {
+
+    // check if user entered something
+    if (buffer[0] != '\n') {
+      for (int i = 0; i < nbSockets; i++) {
+        nwrite(tabSockets[i], buffer, nbRd);
+      }
+    }
+   // swrite(1, msg, strlen(msg));
   }
+
+  disconnect(tabSockets, nbSockets);
 }
 
-// Processus child who read the response of the zombie
-void childReceiveCommand(void *socketfd) {
+// Processus child which reads the response of the zombie
+void childReceiveCommand(void *tabSockets, void *nbSocketss) {
   char response[SIZE_MESSAGE];
-  int sockfd = *(int *)socketfd;
-  int nbRd = sread(sockfd, response, SIZE_MESSAGE);
-  swrite(1, response, nbRd);
+  int nbSockets = *(int *)nbSocketss;
+  int *sockets = (int *)tabSockets;
+  int nbRd, ret;
+  struct pollfd fds[NB_SOCKETS];
+
+  // init poll
+  for (int i = 0; i < nbSockets; i++) {
+    fds[i].fd = sockets[i];
+    fds[i].events = POLLIN;
+  }
+
+  // version sans boucle ou avec boucle while(1) et timeout à 1000??
+  ret = poll(fds, nbSockets, -1);
+  checkNeg(ret, "server poll error");
+
+  // if (ret == 0) // none has answered yet
+  //   continue;
+
+  for (int i = 0; i < nbSockets; i++) {
+
+    if (fds[i].revents & POLLIN) {
+
+      while ((nbRd = sread(sockets[i], response, SIZE_MESSAGE)) != 0) {
+        if (nbRd != 0) {
+          nwrite(1, response, nbRd);
+        }
+      }
+    }
+  }
 }
 
 // establish a connection with the server
 int initSocketClient(char *serverIP, int serverPort) {
   int sockfd = ssocket();
-  // sconnect(serverIP, serverPort, sockfd);
   struct sockaddr_in addr;
-  memset(&addr, 0, sizeof(addr)); // en System V /
+  memset(&addr, 0, sizeof(addr));
   addr.sin_family = AF_INET;
   addr.sin_port = htons(serverPort);
   inet_aton(serverIP, &addr.sin_addr);
-  int ret = connect(sockfd, (struct sockaddr *) &addr, sizeof(addr));
+  int ret = connect(sockfd, (struct sockaddr *)&addr, sizeof(addr));
+  if (ret == -1)
+    return -1;
   return sockfd;
+}
+
+// closing all the open sockets
+void disconnect(int *tabSockets, int nbSockets) {
+  for (int i = 0; i < nbSockets; i++) {
+    sclose(tabSockets[i]);
+  }
 }
