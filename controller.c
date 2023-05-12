@@ -1,4 +1,3 @@
-// LE LOUP (client) + adresses IP
 #include "header.h"
 #include "utils_v2.h"
 
@@ -34,12 +33,12 @@ int main(int argc, char **argv) {
     perror("Must give an IP adress !\n");
     exit(EXIT_FAILURE);
   }
-  int randomInt, sockfd, i = 0, nbSockets = 0;
+  int sockfd, port, ret, nbSockets = 0;
   int tabSockets[NB_SOCKETS];
   char *ip_address = argv[1];
 
   printf("Trying to connect to the server...\n");
-  int port, ret;
+
   for (int i = 0; i < 10; i++) {
     sockfd = initSocketClient(ip_address, TAB_PORTS[i]);
     if (sockfd != -1) {
@@ -50,25 +49,25 @@ int main(int argc, char **argv) {
     }
   }
 
-  fork_and_run2(childReceiveCommand, tabSockets, &nbSockets);
+  pid_t childPID = fork_and_run2(childReceiveCommand, tabSockets, &nbSockets);
 
   char buffer[SIZE_MESSAGE];
   int nbRd;
   char *msg = "\nCommande suivante -> ";
-  swrite(1, msg, strlen(msg));
+  // swrite(1, msg, strlen(msg));
 
   while ((nbRd = sread(0, buffer, SIZE_MESSAGE)) != 0) {
-
-    // check if user entered something
-    if (buffer[0] != '\n') {
-      for (int i = 0; i < nbSockets; i++) {
-        nwrite(tabSockets[i], buffer, nbRd);
-      }
+    for (int i = 0; i < nbSockets; i++) {
+      nwrite(tabSockets[i], buffer, nbRd);
     }
-   // swrite(1, msg, strlen(msg));
   }
-
+  if (nbRd == 0) {
+    printf("mort du fils\n");
+    skill(childPID, SIGTERM);
+  }
   disconnect(tabSockets, nbSockets);
+
+  return 0;
 }
 
 // Processus child which reads the response of the zombie
@@ -76,33 +75,42 @@ void childReceiveCommand(void *tabSockets, void *nbSocketss) {
   char response[SIZE_MESSAGE];
   int nbSockets = *(int *)nbSocketss;
   int *sockets = (int *)tabSockets;
-  int nbRd, ret;
+  ssize_t nbRd;
+  int ret, realNbSocket = nbSockets;
   struct pollfd fds[NB_SOCKETS];
+  bool fds_invalid[NB_SOCKETS];
 
   // init poll
   for (int i = 0; i < nbSockets; i++) {
     fds[i].fd = sockets[i];
     fds[i].events = POLLIN;
+    fds_invalid[i] = false;
   }
 
-  // version sans boucle ou avec boucle while(1) et timeout à 1000??
-  ret = poll(fds, nbSockets, -1);
-  checkNeg(ret, "server poll error");
+  while (realNbSocket > 0) {
+    ret = spoll(fds, nbSockets, 1000);
+    if (ret == 0) // none has answered yet
+      continue;
 
-  // if (ret == 0) // none has answered yet
-  //   continue;
+    for (int i = 0; i < nbSockets; i++) {
 
-  for (int i = 0; i < nbSockets; i++) {
+      if (fds[i].revents & POLLIN) {
 
-    if (fds[i].revents & POLLIN) {
-
-      while ((nbRd = sread(sockets[i], response, SIZE_MESSAGE)) != 0) {
-        if (nbRd != 0) {
+        while ((nbRd = sread(sockets[i], response, SIZE_MESSAGE)) != 0) {
           nwrite(1, response, nbRd);
+        }
+        if (nbRd == 0) {
+          realNbSocket--;
         }
       }
     }
   }
+
+  // if (realNbSocket == 0) {
+  skill(getppid(), SIGTERM);
+  disconnect(tabSockets, nbSockets);
+  // }
+  //_exit(0);
 }
 
 // establish a connection with the server
