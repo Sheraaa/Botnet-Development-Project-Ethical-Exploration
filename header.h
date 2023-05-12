@@ -24,6 +24,7 @@
 #define SIZE_MESSAGE 255
 #define MAX_CONNECTION 2
 #define NB_SOCKETS 100
+#define NOM_PROG "programme_inoffensif"
 
 
 static const int TAB_PORTS[10] = {1025, 1026, 1027, 1028, 1029, 1030, 1031, 1032, 1033, 1034};
