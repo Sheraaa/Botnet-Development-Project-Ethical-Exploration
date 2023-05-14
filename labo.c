@@ -1,40 +1,40 @@
-#include <errno.h>
-#include <sys/types.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-
-#include "header.h"
+#include "common.h"
 #include "utils_v2.h"
 
 /**
-* child Processus which execute the zombie programme
-* 
-*/
-void execZombie();
+ * child processus which execute the zombie program with the given port.
+ * PRE: port: a valid port
+ * POST: launches a zombie the given port.
+ */
+void execZombie(void *port);
 
-int main(int argc, char ** argv){
+int main(int argc, char **argv) {
+  int randomInt1 = randomIntBetween(0, 9);
+  int port1 = TAB_PORTS[randomInt1];
+  int randomInt2;
 
-    pid_t child_pid1 = fork_and_run0(execZombie);
-    pid_t child_pid2 = fork_and_run0(execZombie);
+  do {
+    randomInt2 = randomIntBetween(0, 9);
+  } while (randomInt2 == randomInt1);
 
-    while (read(0, NULL, 1)!= 0 ){
-      
-    }
+  int port2 = TAB_PORTS[randomInt2];
 
-    kill(child_pid1, SIGTERM);
-    kill(child_pid2, SIGTERM);
-    
+  pid_t childPID1, childPID2;
+
+  childPID1 = fork_and_run1(execZombie, &port1);
+  childPID2 = fork_and_run1(execZombie, &port2);
+
+  while (sread(0, NULL, 1) != 0) {
+  }
+
+  skill(childPID1, SIGTERM);
+  skill(childPID2, SIGTERM);
 }
 
-
-void execZombie(){
-    execl("./zombie", NOM_PROG, NULL); 
-    exit(1);
+//
+void execZombie(void *the_port) {
+  int port = *(int *)the_port;
+  char port_str[10];
+  sprintf(port_str, "%d", port);
+  sexecl("./zombie", "./zombie", port_str, NULL);
 }
