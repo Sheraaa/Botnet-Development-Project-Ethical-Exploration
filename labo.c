@@ -2,7 +2,7 @@
 #include "utils_v2.h"
 
 /**
- * Child processus which launches the zombie program with the given port.
+ * Child process which launches the zombie program with the given port.
  *
  * PRE: @param port: a valid port.
  * POST: launches a zombie the given port.

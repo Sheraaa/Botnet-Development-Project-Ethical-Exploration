@@ -17,7 +17,7 @@
 void childReceiveCommand(void *tabSockets, void *nbSockets);
 
 /**
- * Search for all available ports on each IP address provided.
+ * Searches for all available ports on each IP address provided.
  *
  * PRE: @param tabSockets an empty array to be initialized with the size of
  *                   (NB_PORTS * argc - 1)
@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
 
   while ((nbRd = sread(0, buffer, SIZE_MESSAGE)) != 0) {
 
-    // check if user entered something
+    // Checks if user entered something
     if (buffer[0] != '\n') {
       for (int i = 0; i < nbSockets; i++) {
         nwrite(tabSockets[i], buffer, nbRd);
@@ -113,7 +113,7 @@ void childReceiveCommand(void *tabSockets, void *nbSocketss) {
   skill(getppid(), SIGTERM);
 }
 
-// Search for all ports available on each IP adress given.
+// Searches for all ports available on each IP adress given.
 void getAllConnections(int *tabSockets, int *nbSockets, int argc, char **argv) {
   int port, sockfd;
   char msg[SIZE_MESSAGE];

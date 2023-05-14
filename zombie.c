@@ -3,7 +3,7 @@
 #include "utils_v2.h"
 
 /**
- * Child process which execute the command bash received through the given
+ * Child process which executes the command bash received through the given
  * socket.
  *
  * PRE: @param sockfd: a valid socket file descriptor.
@@ -22,12 +22,12 @@ void childExec(void *sockfd);
 void disconnect(int *tabSockets);
 
 /**
- * Kill all the bash shells with a SIGTERM signal.
+ * Kills all the bash shells with a SIGTERM signal.
  *
  * PRE: @param tabChilds: an array of child's PID
  *      @param nbChilds: the number of child.
  *
- * POST: kill all child processes with the SIGTERM signal.
+ * POST: kills all child processes with the SIGTERM signal.
  **/
 void killThemAll(int *tabChilds, int nbChilds);
 
