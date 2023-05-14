@@ -1,12 +1,13 @@
 #include "common.h"
-#include "utils_v2.h"
 #include "server.h"
+#include "utils_v2.h"
 
 /**
- * Child processus which execute the command bash received through the given
+ * Child process which execute the command bash received through the given
  * socket.
  *
- * PRE: sockfd: a valid socket file descriptor.
+ * PRE: @param sockfd: a valid socket file descriptor.
+ *
  * POST: execute the command bash.
  */
 void childExec(void *sockfd);
@@ -14,14 +15,19 @@ void childExec(void *sockfd);
 /**
  * Closes all the sockets in tabSockets
  *
- * PRE: tabSockets: contains all the open sockets, nbSockets:
- * POST:
+ * PRE: @param tabSockets: contains all the open sockets, nbSockets:
+ *
+ * POST: closes all the sockets in tabSockets.
  **/
 void disconnect(int *tabSockets);
 
 /**
  * Kill all the bash shells with a SIGTERM signal.
  *
+ * PRE: @param tabChilds: an array of child's PID
+ *      @param nbChilds: the number of child.
+ *
+ * POST: kill all child processes with the SIGTERM signal.
  **/
 void killThemAll(int *tabChilds, int nbChilds);
 
@@ -50,7 +56,8 @@ int main(int argc, char **argv) {
     sockfd = initSocketServer(port);
   }
 
-  printf("The server listens on the port : %d \n", port);
+  sprintf(msg, "The server listens on the port : %d \n", port);
+  nwrite(1, msg, strlen(msg));
 
   while (end == 0) {
     newsockfd = accept(sockfd, NULL, NULL);
@@ -65,13 +72,13 @@ int main(int argc, char **argv) {
     }
   }
 
-  // disconnect(tabSockets);
+  disconnect(tabSockets);
   killThemAll(tabChilds, nbChilds);
   sclose(sockfd);
   return 0;
 }
 
-// child process run the command
+// Child process which becomes a shell.
 void childExec(void *sockfd) {
   int newsockfd = *(int *)sockfd;
 
@@ -79,19 +86,17 @@ void childExec(void *sockfd) {
   dup2(newsockfd, STDOUT_FILENO);
   dup2(newsockfd, STDERR_FILENO);
 
-  sclose(newsockfd);
   sexecl("/bin/bash", "programme_inoffensif", NULL);
 }
 
-
-// closing all the open sockets
+// Closes all the open sockets
 void disconnect(int *tabSockets) {
   for (int i = 0; i < MAX_CONNECTIONS; i++) {
     sclose(tabSockets[i]);
   }
 }
 
-// kill all the bash shells
+// Kills all the bash shells.
 void killThemAll(int *tabChilds, int nbChilds) {
   for (int i = 0; i < nbChilds; i++) {
     skill(tabChilds[i], SIGTERM);
@@ -99,5 +104,5 @@ void killThemAll(int *tabChilds, int nbChilds) {
   }
 }
 
-// handler when received SIGTERM
+// Handler when SIGTERM is received.
 void endSeverHandler(int sig) { end = 1; }

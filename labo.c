@@ -2,8 +2,9 @@
 #include "utils_v2.h"
 
 /**
- * child processus which execute the zombie program with the given port.
- * PRE: port: a valid port
+ * Child processus which launches the zombie program with the given port.
+ *
+ * PRE: @param port: a valid port.
  * POST: launches a zombie the given port.
  */
 void execZombie(void *port);
@@ -31,7 +32,7 @@ int main(int argc, char **argv) {
   skill(childPID2, SIGTERM);
 }
 
-//
+// Child process which runs a zombie.
 void execZombie(void *the_port) {
   int port = *(int *)the_port;
   char port_str[10];

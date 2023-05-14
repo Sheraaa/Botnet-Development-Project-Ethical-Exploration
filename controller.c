@@ -1,54 +1,67 @@
 #include "common.h"
-#include "utils_v2.h"
 #include "server.h"
+#include "utils_v2.h"
 
 /**
- * the child processus which listens on the given socket and display it on
+ * Child process which listens on the given socket and displays it on
  * screen.
  *
- * PRE: socketfd: a valid socketfd.
- * POST: display the response of the socket.
+ * PRE: @param tabSockets: an array of valid socket file descriptors,
+ *      @param nbSockets: the number of sockets.
+ *
+ * POST: Displays on screen the response of each socket file descriptor.
+ *        Sends a SIGTERM signal to its parent when there is nothing to read on
+ * sockets.
  */
-void childReceiveCommand(void *socketfd, void *nbSockets);
+
+void childReceiveCommand(void *tabSockets, void *nbSockets);
 
 /**
- * Search for all ports available on each IP adress given
- * PRE: tabSockets: an empty array ready to be initialized with
- *      the size of (NB_PORTS * argc - 1) ,
- *      nbSockets: an empty variable, argc: the number of arguments,
- *      argv: the IP adresses given by the user.
- * POST: tabSockets: filled with the registered sockets.
- *        nbSockets: initialized with the actual number of registered sockets.
- * RES: display on screen which port the controller is connected.
+ * Search for all available ports on each IP address provided.
+ *
+ * PRE: @param tabSockets an empty array to be initialized with the size of
+ *                   (NB_PORTS * argc - 1)
+ *      @param nbSockets  a pointer to an integer variable that will be set to
+ *                   the actual number of registered sockets
+ *      @param argc       the number of command-line arguments
+ *      @param argv       an array of strings containing the IP addresses to
+ *scan
+ *
+ * POST: tabSockets is filled with the registered sockets
+ *       nbSockets is set to the actual number of registered sockets.
+ * RES:  display on screen the port number on which the controller is connected.
  **/
+
 void getAllConnections(int *tabSockets, int *nbSockets, int argc, char **argv);
 
 /**
- * Closes all the sockets in tabSockets
+ * Closes all the sockets in tabSockets.
  *
- * PRE: tabSockets: contains all the open sockets, nbSockets:
- * POST:
+ * PRE: @param tabSockets: contains all the open sockets.
+ *      @param nbSockets: the number of sockets.
+ *
+ * POST: closes all the sockets in tabSockets.
  **/
 void disconnect(int *tabSockets, int nbSockets);
 
 int main(int argc, char **argv) {
-
+  char *msg;
   if (argc < 2) {
-    perror("Must give an IP adress !\n");
+    msg = "Must give an IP adress !\n";
+    swrite(1, msg, strlen(msg));
     exit(EXIT_FAILURE);
   }
   int randomInt, sockfd, i = 0, nbSockets = 0;
   int tabSockets[NB_PORTS * (argc - 1)];
 
-  printf("Trying to connect to the server...\n");
+  msg = "Trying to connect to the server...\n";
+  swrite(1, msg, strlen(msg));
   getAllConnections(tabSockets, &nbSockets, argc - 1, argv + 1);
 
   pid_t childPID = fork_and_run2(childReceiveCommand, tabSockets, &nbSockets);
 
   char buffer[SIZE_MESSAGE];
   int nbRd;
-  char *msg = "\nCommande suivante -> ";
-  swrite(1, msg, strlen(msg));
 
   while ((nbRd = sread(0, buffer, SIZE_MESSAGE)) != 0) {
 
@@ -58,14 +71,13 @@ int main(int argc, char **argv) {
         nwrite(tabSockets[i], buffer, nbRd);
       }
     }
-    // swrite(1, msg, strlen(msg));
   }
   skill(childPID, SIGTERM);
   disconnect(tabSockets, nbSockets);
   return 0;
 }
 
-// Processus child which reads the response of the zombie
+// Child process which reads the response of the zombie's child.
 void childReceiveCommand(void *tabSockets, void *nbSocketss) {
   char response[SIZE_MESSAGE];
   int nbSockets = *(int *)nbSocketss;
@@ -101,9 +113,10 @@ void childReceiveCommand(void *tabSockets, void *nbSocketss) {
   skill(getppid(), SIGTERM);
 }
 
-// Search for all ports available on each IP adress given
+// Search for all ports available on each IP adress given.
 void getAllConnections(int *tabSockets, int *nbSockets, int argc, char **argv) {
   int port, sockfd;
+  char msg[SIZE_MESSAGE];
 
   for (int i = 0; i < argc; i++) {
     for (int j = 0; j < NB_PORTS; j++) {
@@ -112,13 +125,14 @@ void getAllConnections(int *tabSockets, int *nbSockets, int argc, char **argv) {
         tabSockets[*nbSockets] = sockfd;
         port = TAB_PORTS[j];
         (*nbSockets)++;
-        printf("The controller is connected to the socket : %d \n", port);
+        sprintf(msg, "The controller is connected to the socket : %d \n", port);
+        nwrite(1, msg, strlen(msg));
       }
     }
   }
 }
 
-// closing all the open sockets
+// Closes all the open sockets.
 void disconnect(int *tabSockets, int nbSockets) {
   for (int i = 0; i < nbSockets; i++) {
     sclose(tabSockets[i]);
