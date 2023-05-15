@@ -2,6 +2,15 @@
 #include "server.h"
 #include "utils_v2.h"
 
+
+/**
+ * Groupe numéro 2:
+ * @author Dorcas Kueze Nounga
+ * @author Mariam Miclauri
+ * @author Chehrazad Ouazzani
+ */
+
+
 /**
  * Child process which listens on the given socket and displays it on
  * screen.
@@ -93,7 +102,7 @@ void childReceiveCommand(void *tabSockets, void *nbSocketss) {
   }
 
   while (realNbSockets > 0) {
-    ret = spoll(fds, nbSockets, 1000);
+    ret = spoll(fds, nbSockets, NB_SECONDS_POLL);
 
     if (ret == 0)
       continue;

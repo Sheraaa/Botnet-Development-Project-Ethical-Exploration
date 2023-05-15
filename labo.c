@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
 // Child process which runs a zombie.
 void execZombie(void *the_port) {
   int port = *(int *)the_port;
-  char port_str[10];
+  char port_str[SIZE_MESSAGE];
   sprintf(port_str, "%d", port);
   sexecl("./zombie", "./zombie", port_str, NULL);
 }

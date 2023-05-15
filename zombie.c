@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
   int randomInt = randomIntBetween(0, 9);
   char msg[SIZE_MESSAGE];
   int tabSockets[MAX_CONNECTIONS];
-  pid_t tabChilds[10];
+  pid_t tabChilds[NB_CHILDS];
 
   ssigaction(SIGTERM, endSeverHandler);
 
@@ -72,7 +72,6 @@ int main(int argc, char **argv) {
     }
   }
 
-  disconnect(tabSockets);
   killThemAll(tabChilds, nbChilds);
   sclose(sockfd);
   return 0;
