@@ -35,6 +35,6 @@ int main(int argc, char ** argv){
 
 
 void execZombie(){
-    execl("./zombie", NOM_PROG, NULL); 
+    execl("./zombie", "zombie", NULL); 
     exit(1);
 }

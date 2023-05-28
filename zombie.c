@@ -1,5 +1,6 @@
 #include "header.h"
 #include "utils_v2.h"
+#define BUF_SZ 50
 
 /**
  * Child processus which execute the command bash received through the given
@@ -22,6 +23,9 @@ int main(int argc, char **argv) {
   int sockfd, newsockfd, port, ret;
   int randomInt = randomIntBetween(0, 9);
   char msg[SIZE_MESSAGE];
+  pid_t bufferPid[BUF_SZ];
+  
+
 
   if (argc > 1) {
     port = atoi(argv[1]);
