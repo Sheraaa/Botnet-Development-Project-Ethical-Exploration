@@ -1,6 +1,6 @@
 # Botnet-Development-Project-Ethical-Exploration
 
-In this C programming project, my team and I have developed a simplified botnet, consisting of a controller and a zombie component. 
+In this C programming project, my team, consisting of Michelle Dorcas, Mariam Miclauri and myself, has developed a simplified botnet, comprising a controller and a zombie component.
 Our primary objective is to gain insights into vulnerabilities within code and configurations while emphasizing 
 our commitment to the ethical use of these skills.
 
