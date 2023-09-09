@@ -13,9 +13,14 @@ and security vulnerabilities while emphasizing ethical use and responsible condu
 
 ## Components
 
-- **Controller**: The controller is responsible for remotely connecting to the zombie(s) and opening a bash session without requiring authentication. It acts as the command center for the botnet.
+- **Controller**:
+  The controller is responsible for remotely connecting to the zombie(s) and opening a bash session without requiring authentication. It acts as the command center for the botnet.
 
-- **Zombie**: The zombie represents the compromised computer within the botnet. It listens for commands from the controller and executes them on the host system, allowing remote control.
+- **Zombie**:
+  The zombie represents the compromised computer within the botnet. It listens for commands from the controller and executes them on the host system, allowing remote control.
+  
+- **Labo**:
+  This component launches two zombies on the same machine, creating a test environment to validate controller and zombie implementations. Zombies run on random ports selected from a list of 10 hardcoded ports. When the labo program terminates ('Ctrl+D'), it signals all launched zombies to terminate.
 
 ## Usage
 
