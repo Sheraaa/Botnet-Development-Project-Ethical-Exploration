@@ -46,13 +46,13 @@ Use it responsibly and within the boundaries of the law.
 ## Credits
 We would like to extend our heartfelt thanks to the following individuals who provided valuable guidance, support, and inspiration throughout the development of this project:
 
-- **Professor Anthony Legrand** - for their valuable guidance, mentorship, expertise, and insights that significantly influenced the project's direction.
+- **Professor Anthony Legrand** - for his valuable guidance, mentorship, expertise, and insights that significantly influenced the project's direction.
 
-- **Professor Oliver Choquet** - for their invaluable assistance in improving our code.
+- **Professor Oliver Choquet** - for his invaluable assistance in improving our code.
 
-- **Professor Jose Vander Meulen** - for their unwavering support and valuable insights played a crucial role in the development of our project.
+- **Professor Jose Vander Meulen** - for his unwavering support and valuable insights played a crucial role in the development of our project.
   
-- **Professor Xavier Gillard** - for their insightful feedback, valuable assistance, and the brilliant idea of the botnet project. This project proved to be highly successful and fruitful, allowing us to acquire significant knowledge. It was an academic endeavor that we found both highly educational and incredibly enjoyable !
+- **Professor Xavier Gillard** - for his insightful feedback, valuable assistance, and the brilliant idea of the botnet project. This project proved to be highly successful and fruitful, allowing us to acquire significant knowledge. It was an academic endeavor that we found both highly educational and incredibly enjoyable !
   
 - **Lucas** and **Thomas** - For their assistance in addressing challenges and providing valuable perspectives.
 
